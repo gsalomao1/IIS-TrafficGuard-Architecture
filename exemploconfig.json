@@ -1,0 +1,142 @@
+{
+  "IntervaloVerificacaoSegundos": 60,
+  "CaminhoLogsIIS": "${CAMINHO_LOGS_IIS}",          
+  "LimiteAcessosAntesBloqueio": 300,
+  "LimiteTaxaRequisicoesPorSegundo": 25,
+  "UltimasLinhasProcessar": 5000,
+  "RegexIPsInternosIgnorar": "${REGEX_IPS_INTERNOS}",
+
+  "AbuseIPDB_APIKey": "${ABUSEIPDB_API_KEY}",
+  "AbuseIPDB_APIKeys": [
+    "${ABUSEIPDB_API_KEY_1}",
+    "${ABUSEIPDB_API_KEY_2}"
+  ],
+
+  "AbuseIPDB_UsarConsulta": true,
+  "AbuseIPDB_LimiteScore": 50,
+
+  "LogArquivoCaminho": "${CAMINHO_LOG_ARQUIVO}",
+
+  "EmailRemetente": "${SMTP_FROM}",
+  "EmailDestinatarios": [
+    "${SECURITY_TEAM_EMAIL}",
+    "${INFRA_TEAM_EMAIL}",
+    "${SOC_EMAIL}"
+  ],
+
+  "SMTPServidor": "${SMTP_SERVER}",
+  "SMTPPorta": 587,
+  "SMTPUsuario": "${SMTP_USER}",
+  "CaminhoArquivoSenhaEmail": "${SMTP_PASSWORD_FILE}",
+
+  "RegrasDeteccaoAtaques": [
+    {
+      "TipoAtaque": "SQLi",
+      "Padroes": [
+        "UNION\\s+SELECT", "OR\\s+1=1", "WAITFOR\\s+DELAY", "SLEEP\\(", "BENCHMARK\\(",
+        "--", "#", "/\\*", "\\*/", "information_schema", "(CONVERT|CAST)\\(",
+        "%27\\s*OR\\s*1=1", "DROP\\s+TABLE", "INSERT\\s+INTO", "xp_cmdshell"
+      ],
+      "Campos": ["cs-uri-query", "cs-uri-stem"],
+      "LimiteOcorrencias": 5
+    },
+    {
+      "TipoAtaque": "XSS",
+      "Padroes": [
+        "<script", "%3Cscript", "onload=", "onerror=", "onmouseover=", "javascript:",
+        "document\\.cookie", "<iframe", "%3Ciframe", "<svg", "alert\\(",
+        "srcdoc=", "onfocus=", "onmouseenter=", "onmessage="
+      ],
+      "Campos": ["cs-uri-query", "cs-uri-stem", "cs-user-agent"],
+      "LimiteOcorrencias": 5
+    },
+    {
+      "TipoAtaque": "Directory Traversal",
+      "Padroes": [
+        "\\.\\./", "\\.\\.\\\\", "%2e%2e%2f", "%2e%2e\\%5c",
+        "/etc/passwd", "/etc/shadow", "win.ini", "boot.ini",
+        "web.config", ".htaccess", ".htpasswd", "cmd\\.exe"
+      ],
+      "Campos": ["cs-uri-stem", "cs-uri-query"],
+      "LimiteOcorrencias": 3
+    },
+    {
+      "TipoAtaque": "Remote Code Execution",
+      "Padroes": [
+        "eval\\(", "base64_decode\\(", "phpinfo\\(", "shell_exec\\(", "assert\\(",
+        "passthru\\(", "proc_open\\(", "popen\\(", "system\\(", "exec\\(",
+        "\\$\\{.*\\}", "\\$\\(.*\\)", "`.*?`"
+      ],
+      "Campos": ["cs-uri-query", "cs-uri-stem"],
+      "LimiteOcorrencias": 2
+    },
+    {
+      "TipoAtaque": "Forca Bruta (401)",
+      "Padroes": [],
+      "Campos": ["sc-status"],
+      "StatusMatch": "401",
+      "LimiteOcorrencias": 10
+    },
+    {
+      "TipoAtaque": "Erros Excessivos (4xx/5xx)",
+      "Padroes": [],
+      "Campos": ["sc-status"],
+      "StatusMatch": "(4\\d{2}|5\\d{2})",
+      "LimiteOcorrencias": 20
+    },
+    {
+      "TipoAtaque": "Hacking Tool User-Agent",
+      "Padroes": [
+        "sqlmap", "nmap", "acunetix", "nikto", "masscan", "fuzz", "wpscan",
+        "openvas", "zap", "nessus", "netsparker", "jaeles", "arachni", "hydra",
+        "owasp", "burp", "burpsuite", "metasploit", "sqlninja", "ratproxy", "crawler"
+      ],
+      "Campos": ["cs-user-agent"],
+      "LimiteOcorrencias": 1
+    },
+    {
+      "TipoAtaque": "SSRF (Server-Side Request Forgery)",
+      "Padroes": [
+        "localhost", "127\\.0\\.0\\.1", "169\\.254\\.169\\.254", "metadata\\.google\\.internal",
+        "file://", "gopher://", "dict://"
+      ],
+      "Campos": ["cs-uri-query", "cs-uri-stem"],
+      "LimiteOcorrencias": 3
+    },
+    {
+      "TipoAtaque": "File/Directory Enumeration",
+      "Padroes": [
+        "/admin", "/.git", "/.env", "/setup", "/install", "/wp-login",
+        "/config", "/credentials", "/docker-compose\\.yml", "/id_rsa", "/database\\.yml"
+      ],
+      "Campos": ["cs-uri-stem"],
+      "LimiteOcorrencias": 6
+    },
+    {
+      "TipoAtaque": "Spam em Parâmetros GET",
+      "Padroes": [
+        "viagra", "casino", "porn", "bit\\.ly", "t\\.co", "tinyurl",
+        "free-money", "buy-now", "crypto", "forex"
+      ],
+      "Campos": ["cs-uri-query"],
+      "LimiteOcorrencias": 4
+    },
+    {
+      "TipoAtaque": "JNDI Injection (Log4Shell)",
+      "Padroes": [
+        "\\$\\{jndi:", "\\$\\{lower:j\\}", "\\$\\{env:.*?jndi"
+      ],
+      "Campos": ["cs-uri-query", "cs-uri-stem", "cs-user-agent"],
+      "LimiteOcorrencias": 1
+    },
+    {
+      "TipoAtaque": "Anomalous User-Agent (Bots/Scripts)",
+      "Padroes": [
+        "python-requests", "curl/", "wget", "^Java/", "Go-http-client",
+        "libwww-perl", "httpclient", "winhttp", "^-$", "^Apache-HttpClient"
+      ],
+      "Campos": ["cs-user-agent"],
+      "LimiteOcorrencias": 15
+    }
+  ]
+}
