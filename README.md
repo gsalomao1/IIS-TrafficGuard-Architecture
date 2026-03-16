@@ -6,7 +6,7 @@
 ## 📌 Visão Geral
 Em ambientes de alto volume transacional, a dependência exclusiva de análise manual de logs gera uma janela de exposição (MTTR) crítica. O **IIS-TG** é um motor de detecção de intrusão e resposta automatizada (HIPS/HIDS) desenvolvido nativamente em PowerShell. Ele atua diretamente na camada de host em servidores Microsoft IIS.
 
-Seu foco é detectar e conter ataques volumétricos, explorações da camada de aplicação (OWASP Top 10) e tráfego malicioso em tempo real, aplicando bloqueios dinâmicos via Windows Defender Firewall.
+Seu foco é detectar e conter ataques volumétricos, explorações da camada de aplicação (OWASP Top 10), Prompt Injection (AI Abuse) e tráfego malicioso em tempo real, aplicando bloqueios dinâmicos via Windows Defender Firewall.
 
 ---
 
@@ -22,6 +22,8 @@ Para evitar picos de CPU em arquivos de log que chegam a gigabytes:
 ### 2. Motor de Detecção (Heurística + Assinaturas)
 Cada requisição passa por um funil de inspeção dupla:
 * **Análise Volumétrica:** Cálculo matemático da taxa de requisições por segundo (Req/s) para flagrar bots e DDoS na camada 7.
+* **Normalização de Tráfego (De-obfuscation):** Implementação de URL Decode em tempo real nos payloads. Isso anula tentativas de evasão por codificação hexadecimal ou double encoding, expondo a real intenção do atacante antes da análise das assinaturas.
+* **Detecção LotL (Living-off-the-Land):** Identificação de abuso de binários legítimos (certutil, mshta, powershell) disparados via requisições web, antecipando tentativas de movimentação late
 * **Inspeção de Payload (Regex):** Aplicação de expressões regulares otimizadas nos campos de URI, Query e User-Agent, detectando:
   * *SQL Injection (SQLi) e Cross-Site Scripting (XSS)*
   * *Directory Traversal e Remote Code Execution (RCE)*
@@ -37,12 +39,15 @@ Ao atingir o threshold de criticidade:
 * Criação dinâmica de regras de bloqueio *inbound* no **Windows Defender Firewall**.
 * Disparo de alertas via SMTP ao SOC/CSIRT contendo os Indicadores de Ataque (IoA), telemetria do IP e evidências extraídas do log bruto.
 
+### 5. Lógica Adaptativa de Risco
+Diferenciação entre alertas de Aviso Moderado e Bloqueio Crítico baseada na reputação global (AbuseIPDB), permitindo uma postura de segurança agressiva sem comprometer a disponibilidade de usuários com scores de risco baixo/médio.
 ---
 
 ## 🚀 Desafios Técnicos Superados
 
 * **Prevenção de Falsos Positivos:** Implementação de lógica de *Whitelisting* (Regex) para ignorar ranges de IPs internos (`10.x`, `172.x`) e rotinas de scanners de vulnerabilidade corporativos.
 * **Desacoplamento de Configuração:** Toda a inteligência da ferramenta (Limites de taxa, regras Regex, credenciais seguras e thresholds da API) foi isolada em um arquivo `config.json`, permitindo que a equipe de operações (SOC) ajuste a detecção sem tocar no código-fonte.
+* **Gerenciamento de Recursos e Memory Safety:** Implementação de rotinas de garbage collection manual no cache de IPs e leitura incremental otimizada para processar até 10.000 eventos por ciclo sem degradação de performance no host.
 
 ---
 
