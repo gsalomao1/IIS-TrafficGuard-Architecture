@@ -40,6 +40,7 @@ Ao atingir o threshold de criticidade:
 
 ### 5. Lógica Adaptativa de Risco
 Diferenciação entre alertas de Aviso Moderado e Bloqueio Crítico baseada na reputação global, permitindo uma postura de segurança agressiva contra redes conhecidas de botnets sem comprometer a disponibilidade de usuários legítimos.
+
 ---
 
 ## 🚀 Desafios Técnicos Superados
